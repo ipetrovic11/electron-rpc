@@ -1,0 +1,24 @@
+{
+  "name": "@workpuls/electron-models",
+  "version": "1.0.4",
+  "description": "RPC wrapper for Electron",
+  "main": "index.js",
+  "scripts": {
+    "prepublish": "npm run build",
+    "pretest": "npm run build",
+    "build": "ttsc"
+  },
+  "author": "WorkPuls, Inc",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^5.0.6",
+    "tslib": "^1.10.0",
+    "tslint": "^5.18.0",
+    "ttypescript": "^1.5.7",
+    "typescript": "^3.5.2"
+  },
+  "dependencies": {
+    "rxjs": "~6.4.0",
+    "uuid": "^3.3.2"
+  }
+}

@@ -1,0 +1,149 @@
+import * as uuid from 'uuid';
+import * as broadcast from './broadcast';
+
+import { ipcMain, ipcRenderer, IpcMain, IpcRenderer } from 'electron';
+
+const calls = {};
+const events = {};
+const promises = {};
+
+const type = process.type;
+const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcMain : ipcRenderer;
+
+ipc.on('workpuls::rpc:response', (event, payload) => {
+
+    const { id, data, error } = payload;
+    if (promises[id]) {
+
+        if (error) {
+            promises[id].reject(data);
+        } else {
+            promises[id].resolve(data);
+        }
+
+        delete promises[id];
+    } else if (type !== 'browser') {
+        broadcast.send(`workpuls::rpc:response`, payload, event);
+    }
+
+});
+
+ipc.on('workpuls::rpc:call', async (event, payload) => {
+
+    const { id, name, data } = payload;
+    if (calls[name]) {
+        const response = {
+            id,
+            data: null,
+            error: null
+        };
+
+        try {
+            response.data = await calls[name](data);
+        } catch (error) {
+            response.error = error;
+        }
+
+        event.sender.send('workpuls::rpc:response', response);
+    } else if (type === 'browser') {
+        broadcast.send(`workpuls::rpc:execute`, payload, event);
+    }
+
+});
+
+ipc.on('workpuls::rpc:event', async (event, payload) => {
+
+    const { name, data } = payload;
+    if (events[name]) {
+        events[name](data);
+    }
+
+    if (type !== 'browser') {
+        broadcast.send(`workpuls::rpc:execute`, payload, event);
+    }
+
+});
+
+/**
+ * Make a call in remote process, window or main process.
+ * @param name - name of the action.
+ * @param data - any payload that you would like to transport.
+ * @param timeout - after how many ms function will timout, default: 2000.
+ */
+export function call(name: string, data?: any, timeout: number = 2000): Promise<any> {
+
+    return new Promise((resolve, reject) => {
+        const id = uuid.v4();
+        promises[id] = {resolve, reject};
+
+        const payload = { id, name, data };
+
+        if (type === 'browser') {
+            broadcast.send(`workpuls::rpc:execute`, payload);
+        } else if (type === 'renderer') {
+            ipcRenderer.send(`workpuls::rpc:execute`, payload);
+        }
+
+        setTimeout(() => {
+            if (promises[id]) {
+                reject('Timeout');
+                delete promises[id];
+            }
+        }, timeout);
+    });
+}
+
+/**
+ * Emmit event for all remote processes, windows and main process.
+ * @param name - name of the emitted event.
+ * @param data - any payload that you would like to transport.
+ */
+export function emit(name: string, data: any): void {
+
+    const payoad = { name, data };
+
+    if (type === 'browser') {
+        broadcast.send(`workpuls::rpc:execute`, payoad);
+    } else if (type === 'renderer') {
+        ipcRenderer.send(`workpuls::rpc:execute`, payoad);
+    }
+}
+
+/**
+ * Subscribe to event.
+ * @param name - name of the event.
+ * @param handler - function executed when event is triggered.
+ */
+export function on(name: string, handler: (data: any) => any): (data: any) => any {
+    events[name] = handler;
+    return handler;
+}
+
+/**
+ * Handle remote procedure call.
+ * @param name - name of remote procedure.
+ * @param handler -  function executed when call is triggered.
+ */
+export function handle(name: string, handler: (data: any) => any): (data: any) => any {
+    calls[name] = handler;
+    return handler;
+}
+
+/**
+ * Remove already set handler either for remote procedure or event.
+ * @param handler - instance of handler that is set for actions.
+ */
+export function remove(handler: (data: any) => any): void {
+
+    Object.keys(events).forEach(key => {
+        if (events[key] === handler) {
+            delete events[key];
+        }
+    });
+
+    Object.keys(calls).forEach(key => {
+        if (calls[key] === handler) {
+            delete calls[key];
+        }
+    });
+}

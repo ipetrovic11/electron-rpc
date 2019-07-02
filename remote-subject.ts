@@ -6,7 +6,7 @@ import { BehaviorSubject } from 'rxjs';
  * handling of changes. If it is updated in one process it will be
  * updated in all other processes which do have the same name;
  */
-export default class RemoteSubject<T> extends BehaviorSubject<T> {
+export class RemoteSubject<T> extends BehaviorSubject<T> {
 
     name: string;
 

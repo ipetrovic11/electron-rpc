@@ -2,11 +2,11 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
-    "outFile":"./dist/index.js",
+    "outDir":"./dist",
     "sourceMap": true,
     "declaration": true,
     "downlevelIteration": true,
-    "module": "amd",
+    "module": "commonjs",
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "importHelpers": true,

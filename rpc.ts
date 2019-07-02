@@ -8,7 +8,7 @@ const events = {};
 const promises = {};
 
 const type = process.type;
-const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcMain : ipcRenderer;
+const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcRenderer : ipcMain;
 
 ipc.on('workpuls::rpc:response', (event, payload) => {
 
@@ -45,8 +45,8 @@ ipc.on('workpuls::rpc:call', async (event, payload) => {
         }
 
         event.sender.send('workpuls::rpc:response', response);
-    } else if (type === 'browser') {
-        broadcast.send(`workpuls::rpc:execute`, payload, event);
+    } else if (type !== 'browser') {
+        broadcast.send(`workpuls::rpc:call`, payload, event);
     }
 
 });
@@ -59,7 +59,7 @@ ipc.on('workpuls::rpc:event', async (event, payload) => {
     }
 
     if (type !== 'browser') {
-        broadcast.send(`workpuls::rpc:execute`, payload, event);
+        broadcast.send(`workpuls::rpc:event`, payload, event);
     }
 
 });
@@ -79,9 +79,9 @@ export function call(name: string, data?: any, timeout: number = 2000): Promise<
         const payload = { id, name, data };
 
         if (type === 'browser') {
-            broadcast.send(`workpuls::rpc:execute`, payload);
+            broadcast.send(`workpuls::rpc:call`, payload);
         } else if (type === 'renderer') {
-            ipcRenderer.send(`workpuls::rpc:execute`, payload);
+            ipcRenderer.send(`workpuls::rpc:call`, payload);
         }
 
         setTimeout(() => {
@@ -103,9 +103,9 @@ export function emit(name: string, data: any): void {
     const payoad = { name, data };
 
     if (type === 'browser') {
-        broadcast.send(`workpuls::rpc:execute`, payoad);
+        broadcast.send(`workpuls::rpc:event`, payoad);
     } else if (type === 'renderer') {
-        ipcRenderer.send(`workpuls::rpc:execute`, payoad);
+        ipcRenderer.send(`workpuls::rpc:event`, payoad);
     }
 }
 

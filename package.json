@@ -1,6 +1,6 @@
 {
-  "name": "@workpuls/electron-models",
-  "version": "1.0.4",
+  "name": "@workpuls/electron-rpc",
+  "version": "0.1.0",
   "description": "RPC wrapper for Electron",
   "main": "index.js",
   "scripts": {

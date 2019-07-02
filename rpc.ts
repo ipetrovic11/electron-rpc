@@ -8,7 +8,7 @@ const events = {};
 const promises = {};
 
 const type = process.type;
-const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcRenderer : ipcMain;
+const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcMain : ipcRenderer;
 
 ipc.on('workpuls::rpc:response', (event, payload) => {
 
@@ -22,7 +22,7 @@ ipc.on('workpuls::rpc:response', (event, payload) => {
         }
 
         delete promises[id];
-    } else if (type !== 'browser') {
+    } else if (type === 'browser') {
         broadcast.send(`workpuls::rpc:response`, payload, event);
     }
 
@@ -45,7 +45,7 @@ ipc.on('workpuls::rpc:call', async (event, payload) => {
         }
 
         event.sender.send('workpuls::rpc:response', response);
-    } else if (type !== 'browser') {
+    } else if (type === 'browser') {
         broadcast.send(`workpuls::rpc:call`, payload, event);
     }
 
@@ -58,7 +58,7 @@ ipc.on('workpuls::rpc:event', async (event, payload) => {
         events[name](data);
     }
 
-    if (type !== 'browser') {
+    if (type === 'browser') {
         broadcast.send(`workpuls::rpc:event`, payload, event);
     }
 

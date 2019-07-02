@@ -2,9 +2,9 @@
  * Used only in main process to broadcast message to all windows.
  */
 
-import { BrowserWindow, Event, WebContents } from "electron";
+import { BrowserWindow, Event, WebContents } from 'electron';
 
-interface WebContentsExtended extends WebContents{
+interface WebContentsExtended extends WebContents {
     getOwnerBrowserWindow?(): BrowserWindow;
 }
 
@@ -16,12 +16,12 @@ interface WebContentsExtended extends WebContents{
  */
 export function send(message: string, payload: any, sender?: BrowserWindow | Event): void {
 
-    if(sender instanceof Event) {
+    if (sender instanceof Event) {
         sender = (sender.sender as WebContentsExtended).getOwnerBrowserWindow();
     }
 
-    BrowserWindow.getAllWindows().forEach( window => {
-        if(window !== sender){
+    BrowserWindow.getAllWindows().forEach(window => {
+        if (window !== sender) {
             window.webContents.send(message, payload);
         }
     });

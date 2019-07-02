@@ -40,5 +40,4 @@ export default class RemoteSubject<T> extends BehaviorSubject<T> {
         RPC.emit(this.update, newValue);
         super.next(newValue);
     }
-
 }

@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "description": "RPC wrapper for Electron",
   "main": "index.js",
+  "private": false,
   "scripts": {
     "prepublish": "npm run build",
     "pretest": "npm run build",
     "build": "ttsc"
   },
   "author": "WorkPuls, Inc",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "devDependencies": {
     "electron": "^5.0.6",
     "tslib": "^1.10.0",
@@ -20,5 +21,10 @@
   "dependencies": {
     "rxjs": "~6.4.0",
     "uuid": "^3.3.2"
-  }
+  },
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/index.js.map"
+  ]
 }

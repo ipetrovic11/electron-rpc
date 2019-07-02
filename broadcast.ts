@@ -16,8 +16,10 @@ interface WebContentsExtended extends WebContents {
  */
 export function send(message: string, payload: any, sender?: BrowserWindow | Event): void {
 
-    if (sender instanceof Event) {
-        sender = (sender.sender as WebContentsExtended).getOwnerBrowserWindow();
+    const senderAny = sender as any;
+
+    if (senderAny && senderAny.sender) {
+        sender = ((sender as Event).sender as WebContentsExtended).getOwnerBrowserWindow();
     }
 
     BrowserWindow.getAllWindows().forEach(window => {

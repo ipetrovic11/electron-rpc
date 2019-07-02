@@ -31,8 +31,8 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
             });
         }
 
-        RPC.on(this.update, () => {
-            super.next(value);
+        RPC.on(this.update, newValue => {
+            super.next(newValue);
         });
     }
 

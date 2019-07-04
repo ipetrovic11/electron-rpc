@@ -10,59 +10,62 @@ const promises = {};
 const type = process.type;
 const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcMain : ipcRenderer;
 
-ipc.on('workpuls::rpc:response', (event, payload) => {
+export function init() {
+    ipc.on('workpuls::rpc:response', (event, payload) => {
 
-    const { id, data, error } = payload;
-    if (promises[id]) {
+        const { id, data, error } = payload;
+        if (promises[id]) {
 
-        if (error) {
-            promises[id].reject(data);
-        } else {
-            promises[id].resolve(data);
+            if (error) {
+                promises[id].reject(data);
+            } else {
+                promises[id].resolve(data);
+            }
+
+            delete promises[id];
+        } else if (type === 'browser') {
+            broadcast.send(`workpuls::rpc:response`, payload, event);
         }
 
-        delete promises[id];
-    } else if (type === 'browser') {
-        broadcast.send(`workpuls::rpc:response`, payload, event);
-    }
+    });
 
-});
+    ipc.on('workpuls::rpc:call', async (event, payload) => {
 
-ipc.on('workpuls::rpc:call', async (event, payload) => {
+        const { id, name, data } = payload;
+        if (calls[name]) {
+            const response = {
+                id,
+                data: null,
+                error: null
+            };
 
-    const { id, name, data } = payload;
-    if (calls[name]) {
-        const response = {
-            id,
-            data: null,
-            error: null
-        };
+            try {
+                response.data = await calls[name](data);
+            } catch (error) {
+                response.error = error;
+            }
 
-        try {
-            response.data = await calls[name](data);
-        } catch (error) {
-            response.error = error;
+            event.sender.send('workpuls::rpc:response', response);
+        } else if (type === 'browser') {
+            broadcast.send(`workpuls::rpc:call`, payload, event);
         }
 
-        event.sender.send('workpuls::rpc:response', response);
-    } else if (type === 'browser') {
-        broadcast.send(`workpuls::rpc:call`, payload, event);
-    }
+    });
 
-});
+    ipc.on('workpuls::rpc:event', async (event, payload) => {
 
-ipc.on('workpuls::rpc:event', async (event, payload) => {
+        const { name, data } = payload;
+        if (events[name]) {
+            events[name](data);
+        }
 
-    const { name, data } = payload;
-    if (events[name]) {
-        events[name](data);
-    }
+        if (type === 'browser') {
+            broadcast.send(`workpuls::rpc:event`, payload, event);
+        }
 
-    if (type === 'browser') {
-        broadcast.send(`workpuls::rpc:event`, payload, event);
-    }
+    });
+}
 
-});
 
 /**
  * Make a call in remote process, window or main process.
@@ -74,7 +77,7 @@ export function call(name: string, data?: any, timeout: number = 2000): Promise<
 
     return new Promise((resolve, reject) => {
         const id = uuid.v4();
-        promises[id] = {resolve, reject};
+        promises[id] = { resolve, reject };
 
         const payload = { id, name, data };
 

@@ -31,4 +31,7 @@ Action can be handled just by one process and thats either main process or windo
 If you need multiple processes to do the same action use emit.
 
 ### RemoteSubject
-Remote subject is extending Behaviour subject, but it is synched based on name between processes.
+RemoteSubject is same as BehaviourSubject, but data is synched betweenn multiple process.
+If inside one precess is called .next(value), same value will be propagated to all process.
+
+It is uniquly identified by name.

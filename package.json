@@ -1,6 +1,6 @@
 {
   "name": "@workpuls/electron-rpc",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "RPC wrapper for Electron",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

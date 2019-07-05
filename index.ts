@@ -1,6 +1,6 @@
-import * as Broker from './rpc';
-import * as Broadcast from './broadcast';
-import { RemoteSubject } from './remote-subject';
+import * as Broker from './src/rpc';
+import * as Broadcast from './src/broadcast';
+import { RemoteSubject } from './src/remote-subject';
 
 export {
     Broker,

@@ -1,6 +1,7 @@
 import * as uuid from 'uuid';
 import * as broadcast from './broadcast';
 
+import { NgZone } from '@angular/core';
 import { ipcMain, ipcRenderer, IpcMain, IpcRenderer } from 'electron';
 
 const calls = {};
@@ -10,19 +11,31 @@ const promises = {};
 const type = process.type;
 const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcMain : ipcRenderer;
 
-export function init() {
+export function init(zone?: NgZone) {
+
+    if (!zone) {
+        zone = {
+            run: (fn: (...args: any[]) => any) => {
+                fn();
+            }
+        } as NgZone;
+    }
+
     ipc.on('workpuls::rpc:response', (event, payload) => {
 
         const { id, data, error } = payload;
         if (promises[id]) {
 
-            if (error) {
-                promises[id].reject(data);
-            } else {
-                promises[id].resolve(data);
-            }
+            zone.run(() => {
+                if (error) {
+                    promises[id].reject(data);
+                } else {
+                    promises[id].resolve(data);
+                }
 
-            delete promises[id];
+                delete promises[id];
+            });
+
         } else if (type === 'browser') {
             broadcast.send(`workpuls::rpc:response`, payload, event);
         }
@@ -39,13 +52,15 @@ export function init() {
                 error: null
             };
 
-            try {
-                response.data = await calls[name](data);
-            } catch (error) {
-                response.error = error;
-            }
+            zone.run(async () => {
+                try {
+                    response.data = await calls[name](data);
+                } catch (error) {
+                    response.error = error;
+                }
 
-            event.sender.send('workpuls::rpc:response', response);
+                event.sender.send('workpuls::rpc:response', response);
+            });
         } else if (type === 'browser') {
             broadcast.send(`workpuls::rpc:call`, payload, event);
         }
@@ -56,7 +71,9 @@ export function init() {
 
         const { name, data } = payload;
         if (events[name]) {
-            events[name](data);
+            zone.run(() => {
+                events[name](data);
+            });
         }
 
         if (type === 'browser') {

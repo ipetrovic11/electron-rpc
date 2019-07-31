@@ -28,7 +28,7 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
         } else {
             RPC.call(this.init).then(data => {
                 super.next(data);
-            });
+            }).catch(error => {});
         }
 
         RPC.on(this.update, newValue => {

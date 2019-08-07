@@ -8,14 +8,21 @@ import { BehaviorSubject } from 'rxjs';
  */
 export class RemoteSubject<T> extends BehaviorSubject<T> {
 
+    static registry: { [name: string]: RemoteSubject<any> } = {};
+
     name: string;
 
     private init: string;
     private update: string;
 
-    constructor(name, value) {
-        super(value);
+    constructor(name: string, value?: T) {
+
+        if (RemoteSubject.registry[name]) {
+            return RemoteSubject.registry[name];
+        }
+        super(value || null);
         this.name = name;
+        RemoteSubject.register(name, this);
 
         this.init = `${name}-init`;
         this.update = `${name}-update`;
@@ -28,7 +35,11 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
         } else {
             RPC.call(this.init).then(data => {
                 super.next(data);
-            }).catch(error => {});
+
+                RPC.handle(this.init, async () => {
+                    return this.value;
+                });
+            }).catch(error => { });
         }
 
         RPC.on(this.update, newValue => {
@@ -36,8 +47,13 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
         });
     }
 
+    static register(name: string, subject: RemoteSubject<any>) { this.registry[name] = subject; }
+    static Deregister(name: string) { delete this.registry[name]; }
+    static clearRegistry() { this.registry = {}; }
+
     next(newValue?: T): void {
         RPC.emit(this.update, newValue);
         super.next(newValue);
     }
+
 }

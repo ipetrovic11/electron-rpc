@@ -8,8 +8,13 @@ const calls = {};
 const events = {};
 const promises = {};
 
-const type = process.type;
-const ipc: IpcMain | IpcRenderer = type === 'browser' ? ipcMain : ipcRenderer;
+export enum ProcessType {
+    Main = 'browser',
+    Window = 'render',
+    Worker = 'worker'
+}
+export const type: ProcessType = process.type as ProcessType;
+const ipc: IpcMain | IpcRenderer = type === ProcessType.Main ? ipcMain : ipcRenderer;
 
 export function init(zone?: NgZone) {
 
@@ -36,7 +41,7 @@ export function init(zone?: NgZone) {
                 delete promises[id];
             });
 
-        } else if (type === 'browser') {
+        } else if (type === ProcessType.Main) {
             broadcast.send(`workpuls::rpc:response`, payload, event);
         }
 
@@ -61,7 +66,7 @@ export function init(zone?: NgZone) {
 
                 event.sender.send('workpuls::rpc:response', response);
             });
-        } else if (type === 'browser') {
+        } else if (type === ProcessType.Main) {
             broadcast.send(`workpuls::rpc:call`, payload, event);
         }
 
@@ -76,7 +81,7 @@ export function init(zone?: NgZone) {
             });
         }
 
-        if (type === 'browser') {
+        if (type === ProcessType.Main) {
             broadcast.send(`workpuls::rpc:event`, payload, event);
         }
 

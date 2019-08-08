@@ -10,7 +10,7 @@ const promises = {};
 
 export enum ProcessType {
     Main = 'browser',
-    Window = 'render',
+    Window = 'renderer',
     Worker = 'worker'
 }
 export const type: ProcessType = process.type as ProcessType;
@@ -103,9 +103,9 @@ export function call(name: string, data?: any, timeout: number = 2000): Promise<
 
         const payload = { id, name, data };
 
-        if (type === 'browser') {
+        if (type === ProcessType.Main) {
             broadcast.send(`workpuls::rpc:call`, payload);
-        } else if (type === 'renderer') {
+        } else {
             ipcRenderer.send(`workpuls::rpc:call`, payload);
         }
 
@@ -127,9 +127,9 @@ export function emit(name: string, data: any): void {
 
     const payoad = { name, data };
 
-    if (type === 'browser') {
+    if (type === ProcessType.Main) {
         broadcast.send(`workpuls::rpc:event`, payoad);
-    } else if (type === 'renderer') {
+    } else {
         ipcRenderer.send(`workpuls::rpc:event`, payoad);
     }
 }

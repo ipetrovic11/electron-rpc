@@ -27,18 +27,17 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
         this.init = `${name}-init`;
         this.update = `${name}-update`;
 
-        if (value) {
+        if (RPC.type === RPC.ProcessType.Main) {
             RPC.handle(this.init, async () => {
                 return this.value;
             });
+        }
+
+        if (value) {
             RPC.emit(this.update, value);
-        } else {
+        } else if (RPC.type !== RPC.ProcessType.Main) {
             RPC.call(this.init).then(data => {
                 super.next(data);
-
-                RPC.handle(this.init, async () => {
-                    return this.value;
-                });
             }).catch(error => { });
         }
 

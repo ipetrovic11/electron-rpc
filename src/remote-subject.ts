@@ -1,5 +1,6 @@
 import * as RPC from './rpc';
 import { BehaviorSubject } from 'rxjs';
+import { EventEmitter } from 'events';
 
 /**
  * RemoteSubject extends BehaviorSubject and supports cross processes
@@ -11,6 +12,7 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
     static registry: { [name: string]: RemoteSubject<any> } = {};
 
     name: string;
+    ready: Promise<boolean>;
 
     private init: string;
     private update: string;
@@ -31,14 +33,20 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
             RPC.handle(this.init, async () => {
                 return this.value;
             });
+            this.ready = Promise.resolve(true);
         }
 
         if (value) {
             RPC.emit(this.update, value);
         } else if (RPC.type !== RPC.ProcessType.Main) {
-            RPC.call(this.init).then(data => {
-                super.next(data);
-            }).catch(error => { });
+            this.ready = new Promise((resolve, reject) => {
+                RPC.call(this.init).then(data => {
+                    resolve(true);
+                    super.next(data);
+                }).catch(error => {
+                    resolve(true);
+                });
+            });
         }
 
         RPC.on(this.update, newValue => {

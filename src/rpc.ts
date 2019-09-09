@@ -33,7 +33,7 @@ export function init(zone?: NgZone) {
 
             zone.run(() => {
                 if (error) {
-                    promises[id].reject(data);
+                    promises[id].reject(error);
                 } else {
                     promises[id].resolve(data);
                 }

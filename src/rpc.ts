@@ -64,7 +64,9 @@ export function init(zone?: NgZone) {
                     response.error = error;
                 }
 
-                event.sender.send('workpuls::rpc:response', response);
+                try{
+                    event.sender.send('workpuls::rpc:response', response);
+                }catch(error){ }
             });
         } else if (type === ProcessType.Main) {
             broadcast.send(`workpuls::rpc:call`, payload, event);

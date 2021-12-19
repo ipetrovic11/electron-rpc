@@ -1,6 +1,5 @@
 import * as RPC from './rpc';
 import { BehaviorSubject } from 'rxjs';
-import { EventEmitter } from 'events';
 
 /**
  * RemoteSubject extends BehaviorSubject and supports cross processes

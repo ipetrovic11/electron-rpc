@@ -13,16 +13,16 @@
   "author": "WorkPuls, Inc",
   "license": "MIT",
   "devDependencies": {
-    "@angular/core": "^8.1.1",
-    "electron": "^5.0.6",
+    "@angular/core": "^13.1.1",
+    "electron": "^16.0.5",
     "tslib": "^1.10.0",
     "tslint": "^5.18.0",
     "ttypescript": "^1.5.7",
     "typescript": "^3.5.2"
   },
   "dependencies": {
-    "rxjs": "6.5.3",
-    "uuid": "^3.3.2"
+    "rxjs": "^6.6.7",
+    "uuid": "^8.3.2"
   },
   "files": [
     "dist/*"

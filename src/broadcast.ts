@@ -2,11 +2,7 @@
  * Used only in main process to broadcast message to all windows.
  */
 
-import { BrowserWindow, Event, WebContents } from 'electron';
-
-interface WebContentsExtended extends WebContents {
-    getOwnerBrowserWindow?(): BrowserWindow;
-}
+import { BrowserWindow, IpcMainEvent } from 'electron';
 
 /**
  * Broadcast message to all processes(main and browsers)
@@ -14,12 +10,12 @@ interface WebContentsExtended extends WebContents {
  * @param payload - payload that is transmitted with message.
  * @param sender(optional) - process or windows that sent the message which will be excluded from broadcast.
  */
-export function send(message: string, payload: any, sender?: BrowserWindow | Event): void {
+export function send(message: string, payload: any, sender?: BrowserWindow | IpcMainEvent): void {
 
     const senderAny = sender as any;
 
-    if (senderAny && senderAny.sender) {
-        sender = ((sender as Event).sender as WebContentsExtended).getOwnerBrowserWindow();
+    if ((sender as IpcMainEvent).sender) {
+        sender = BrowserWindow.fromWebContents((sender as IpcMainEvent).sender)
     }
 
     BrowserWindow.getAllWindows().forEach(window => {

@@ -12,9 +12,7 @@ import { BrowserWindow, IpcMainEvent } from 'electron';
  */
 export function send(message: string, payload: any, sender?: BrowserWindow | IpcMainEvent): void {
 
-    const senderAny = sender as any;
-
-    if ((sender as IpcMainEvent).sender) {
+    if (sender && (sender as IpcMainEvent).sender) {
         sender = BrowserWindow.fromWebContents((sender as IpcMainEvent).sender)
     }
 

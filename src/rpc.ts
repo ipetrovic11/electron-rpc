@@ -4,9 +4,10 @@ import * as broadcast from './broadcast';
 import { NgZone } from '@angular/core';
 import { ipcMain, ipcRenderer, IpcMain, IpcRenderer } from 'electron';
 
-const calls = {};
+const handlers = {};
 const events = {};
 const promises = {};
+const executions = {};
 
 export enum ProcessType {
     Main = 'browser',
@@ -50,16 +51,23 @@ export function init(zone?: NgZone) {
     ipc.on('workpuls::rpc:call', async (event, payload) => {
 
         const { id, name, data } = payload;
-        if (calls[name]) {
+        if (handlers[name]) {
+
+            if (executions[id]) {
+                return;
+            }
+
             const response = {
                 id,
                 data: null,
                 error: null
             };
 
+            executions[id] = true;
+
             zone.run(async () => {
                 try {
-                    response.data = await calls[name](data);
+                    response.data = await handlers[name](data);
                 } catch (error) {
                     response.error = error;
                 }
@@ -67,11 +75,14 @@ export function init(zone?: NgZone) {
                 try{
                     event.sender.send('workpuls::rpc:response', response);
                 }catch(error){ }
+
+                if (executions[id]) {
+                    delete executions[id];
+                }
             });
         } else if (type === ProcessType.Main) {
             broadcast.send(`workpuls::rpc:call`, payload, event);
         }
-
     });
 
     ipc.on('workpuls::rpc:event', async (event, payload) => {
@@ -95,11 +106,13 @@ export function init(zone?: NgZone) {
  * Make a call in remote process, window or main process.
  * @param name - name of the action.
  * @param data - any payload that you would like to transport.
- * @param timeout - after how many ms function will timout, default: 2000.
+ * @param timeout - after how many ms function will timout, default: 2500.
+ * @param retry - The number of attempts to make one call (for the duration of the timeout) before the request is actually rejected due to the timeout. Timeout = timeout * (retry + 1)
  */
-export function call(name: string, data?: any, timeout: number = 2000): Promise<any> {
+export function call(name: string, data?: any, timeout: number = 2500, retry = 0): Promise<any> {
 
     return new Promise((resolve, reject) => {
+        let attempt = 1;
         const id = uuid.v4();
         promises[id] = { resolve, reject };
 
@@ -111,11 +124,28 @@ export function call(name: string, data?: any, timeout: number = 2000): Promise<
             ipcRenderer.send(`workpuls::rpc:call`, payload);
         }
 
-        setTimeout(() => {
-            if (promises[id]) {
-                reject('Timeout');
-                delete promises[id];
+        const interval = setInterval(() => {
+
+            if (!promises[id]) {
+                clearInterval(interval);
+                return;
             }
+
+            if (attempt <= retry) {
+                /* With each new attempt, we will send a message again in case the previous one was not received for some reason. */
+                if (type === ProcessType.Main) {
+                    broadcast.send(`workpuls::rpc:call`, payload);
+                } else {
+                    ipcRenderer.send(`workpuls::rpc:call`, payload);
+                }
+
+                attempt++;
+                return;
+            }
+
+            clearInterval(interval);
+            delete promises[id];
+            reject(new Error('Timeout'));
         }, timeout);
     });
 }
@@ -152,7 +182,7 @@ export function on(name: string, handler: (data: any) => any): (data: any) => an
  * @param handler -  function executed when call is triggered.
  */
 export function handle(name: string, handler: (data: any) => any): (data: any) => any {
-    calls[name] = handler;
+    handlers[name] = handler;
     return handler;
 }
 
@@ -168,9 +198,9 @@ export function remove(handler: (data: any) => any): void {
         }
     });
 
-    Object.keys(calls).forEach(key => {
-        if (calls[key] === handler) {
-            delete calls[key];
+    Object.keys(handlers).forEach(key => {
+        if (handlers[key] === handler) {
+            delete handlers[key];
         }
     });
 }

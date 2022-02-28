@@ -39,11 +39,11 @@ export class RemoteSubject<T> extends BehaviorSubject<T> {
             RPC.emit(this.update, value);
         } else if (RPC.type !== RPC.ProcessType.Main) {
             this.ready = new Promise((resolve, reject) => {
-                RPC.call(this.init).then(data => {
+                RPC.call(this.init, null, 2500, 2).then(data => {
                     resolve(true);
                     super.next(data);
                 }).catch(error => {
-                    resolve(true);
+                    reject(error);
                 });
             });
         }
